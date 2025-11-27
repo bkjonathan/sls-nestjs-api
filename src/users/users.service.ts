@@ -1,48 +1,44 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectModel } from '@nestjs/sequelize';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { User } from './entities/user.entity';
+import { User, UserCreationAttributes } from './entities/user.entity';
 
 @Injectable()
 export class UsersService {
-  private users: User[] = [];
-  private idCounter = 1;
+  constructor(
+    @InjectModel(User)
+    private readonly userModel: typeof User,
+  ) {}
 
-  create(createUserDto: CreateUserDto): User {
-    const user: User = {
-      id: String(this.idCounter++),
-      ...createUserDto,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+  async create(createUserDto: CreateUserDto): Promise<User> {
+    const userData: UserCreationAttributes = {
+      name: createUserDto.name,
+      email: createUserDto.email,
     };
-    this.users.push(user);
-    return user;
+    return await this.userModel.create(userData);
   }
 
-  findAll(): User[] {
-    return this.users;
+  async findAll(): Promise<User[]> {
+    return await this.userModel.findAll();
   }
 
-  findOne(id: string): User {
-    const user = this.users.find((u) => u.id === id);
+  async findOne(id: number): Promise<User> {
+    const user = await this.userModel.findByPk(id);
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
     return user;
   }
 
-  update(id: string, updateUserDto: UpdateUserDto): User {
-    const user = this.findOne(id);
-    Object.assign(user, updateUserDto);
-    user.updatedAt = new Date();
+  async update(id: number, updateUserDto: UpdateUserDto): Promise<User> {
+    const user = await this.findOne(id);
+    await user.update(updateUserDto);
     return user;
   }
 
-  remove(id: string): void {
-    const index = this.users.findIndex((u) => u.id === id);
-    if (index === -1) {
-      throw new NotFoundException(`User with ID ${id} not found`);
-    }
-    this.users.splice(index, 1);
+  async remove(id: number): Promise<void> {
+    const user = await this.findOne(id);
+    await user.destroy();
   }
 }

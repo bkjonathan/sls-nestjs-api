@@ -9,6 +9,9 @@ A serverless backend API built with NestJS and AWS Lambda, using the Serverless 
 - API Gateway for HTTP endpoints
 - TypeScript for type safety
 - Serverless Offline for local development
+- **Sequelize ORM with MySQL database**
+- **Docker Compose for local MySQL setup**
+- Database migrations with Sequelize CLI
 - Example CRUD API for Users
 
 ## Prerequisites
@@ -17,11 +20,70 @@ A serverless backend API built with NestJS and AWS Lambda, using the Serverless 
 - npm or yarn
 - AWS CLI configured with credentials
 - Serverless Framework
+- **Docker and Docker Compose (for local database)**
 
 ## Installation
 
 ```bash
 npm install
+```
+
+## Database Setup
+
+### 1. Start MySQL with Docker Compose
+
+```bash
+# Start MySQL container
+docker-compose up -d
+
+# Check if MySQL is running
+docker-compose ps
+```
+
+The MySQL database will be available at:
+- Host: `localhost`
+- Port: `3306`
+- Database: `nestjs_db`
+- Username: `nestjs_user`
+- Password: `nestjs_password`
+
+### 2. Configure Environment Variables
+
+Copy the `.env.example` file to `.env`:
+
+```bash
+cp .env.example .env
+```
+
+The default configuration works with the Docker Compose setup.
+
+### 3. Run Database Migrations
+
+```bash
+# Run all pending migrations
+npm run migration:run
+
+# Check migration status
+npm run migration:status
+
+# Revert last migration (if needed)
+npm run migration:revert
+```
+
+### Database Management Commands
+
+```bash
+# Stop MySQL container
+docker-compose stop
+
+# Start MySQL container
+docker-compose start
+
+# Stop and remove containers
+docker-compose down
+
+# Stop and remove containers with volumes (WARNING: deletes all data)
+docker-compose down -v
 ```
 
 ## Local Development
@@ -98,6 +160,14 @@ src/
 ├── app.service.ts        # Root service
 ├── main.ts               # Application entry point (for local dev)
 ├── lambda.ts             # Lambda handler (for AWS deployment)
+├── database/             # Database configuration
+│   ├── database.module.ts
+│   ├── database.config.ts
+│   ├── config/
+│   │   └── config.js     # Sequelize CLI configuration
+│   ├── migrations/       # Database migrations
+│   │   └── 20251127000001-create-users-table.js
+│   └── seeders/          # Database seeders
 └── users/                # Users module
     ├── users.module.ts
     ├── users.controller.ts
@@ -105,7 +175,7 @@ src/
     ├── dto/              # Data Transfer Objects
     │   ├── create-user.dto.ts
     │   └── update-user.dto.ts
-    └── entities/         # Entity definitions
+    └── entities/         # Sequelize models
         └── user.entity.ts
 ```
 
@@ -114,10 +184,26 @@ src/
 - `serverless.yml` - Serverless Framework configuration
 - `tsconfig.json` - TypeScript configuration
 - `package.json` - Project dependencies and scripts
+- `.sequelizerc` - Sequelize CLI configuration
+- `docker-compose.yml` - Docker Compose configuration for MySQL
+- `.env` - Environment variables (local)
 
 ## Environment Variables
 
-Set environment-specific variables in `serverless.yml` under `provider.environment`.
+Create a `.env` file based on `.env.example`:
+
+```env
+# Database Configuration
+DB_HOST=localhost
+DB_PORT=3306
+DB_USERNAME=nestjs_user
+DB_PASSWORD=nestjs_password
+DB_DATABASE=nestjs_db
+
+# Application
+NODE_ENV=development
+PORT=3000
+```
 
 ## Built With
 
@@ -125,3 +211,6 @@ Set environment-specific variables in `serverless.yml` under `provider.environme
 - [Serverless Framework](https://www.serverless.com/) - Serverless deployment
 - [AWS Lambda](https://aws.amazon.com/lambda/) - Serverless compute
 - [TypeScript](https://www.typescriptlang.org/) - Typed JavaScript
+- [Sequelize](https://sequelize.org/) - ORM for Node.js
+- [MySQL](https://www.mysql.com/) - Relational database
+- [Docker](https://www.docker.com/) - Containerization platform
